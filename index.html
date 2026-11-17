@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Desk">
+<title>Desk Clock</title>
+<style>
+/* Written for iOS 12 Safari (iPhone 6): no flex gap, no color-mix, no optional chaining. */
+:root{--text:#fff;--muted:rgba(255,255,255,.62);--card:rgba(255,255,255,.10);--line:rgba(255,255,255,.14)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#0b1020}
+body{color:var(--text);font-family:-apple-system,"SF Pro Display","Helvetica Neue",Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#bg{position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,#1e3a8a,#0b1020);transition:background 2s}
+#dim{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;opacity:0;pointer-events:none;transition:opacity 3s}
+.app{position:relative;height:100%;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;padding:calc(env(safe-area-inset-top) + 4.5vh) 6vw calc(env(safe-area-inset-bottom) + 4vh)}
+.clock{text-align:center}
+.time{font-size:27vw;font-weight:200;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.time .ampm{font-size:7vw;font-weight:400;letter-spacing:0;margin-left:1.5vw;color:var(--muted)}
+.time .sec{font-size:7vw;font-weight:300;letter-spacing:0;color:var(--muted);margin-left:1vw;display:inline-block;width:9vw;text-align:left}
+.date{font-size:5vw;color:var(--muted);margin-top:1vh;font-weight:500}
+.wx{margin-top:4vh;background:var(--card);border-radius:5vw;padding:4.5vw 5vw}
+.wx-top{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+.wx-ico{font-size:15vw;line-height:1;margin-right:4vw}
+.wx-temp{font-size:15vw;font-weight:300;letter-spacing:-.03em;line-height:1}
+.wx-side{margin-left:auto;text-align:right;font-size:3.8vw;color:var(--muted);line-height:1.5}
+.wx-side b{color:var(--text);font-weight:600}
+.wx-desc{font-size:4.6vw;margin-top:1.5vw;font-weight:500}
+.wx-city{font-size:3.4vw;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2vw}
+.hours{display:-webkit-flex;display:flex;margin-top:4vw;padding-top:3.5vw;border-top:1px solid var(--line)}
+.hr{-webkit-flex:1;flex:1;text-align:center;font-size:3.4vw;color:var(--muted)}
+.hr .e{font-size:6vw;display:block;margin:1vw 0}
+.hr b{color:var(--text);font-weight:600;font-size:4vw}
+.joke{margin-top:3vh;background:var(--card);border-radius:5vw;padding:4.5vw 5vw;-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;min-height:0}
+.joke-h{font-size:3.4vw;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between}
+.joke-q{font-size:5.2vw;font-weight:600;line-height:1.3;margin-top:2.5vw}
+.joke-a{font-size:5.2vw;line-height:1.3;margin-top:2vw;color:#ffd166;font-weight:500}
+.status{position:fixed;right:3vw;bottom:calc(env(safe-area-inset-bottom) + 1.2vh);font-size:2.6vw;color:rgba(255,255,255,.35)}
+
+/* Landscape: clock left, weather + joke right */
+@media (orientation:landscape){
+  .app{-webkit-flex-direction:row;flex-direction:row;-webkit-align-items:stretch;align-items:stretch;padding:5vh calc(env(safe-area-inset-right) + 3.5vw) 5vh calc(env(safe-area-inset-left) + 3.5vw)}
+  .clock{width:50%;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-justify-content:center;justify-content:center}
+  .time{font-size:15vw}.time .ampm,.time .sec{font-size:3.6vw}.time .sec{width:5vw}
+  .date{font-size:2.6vw}
+  .right{width:50%;padding-left:3vw;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+  .wx{margin-top:0;border-radius:2.4vw;padding:2.2vw 2.6vw}
+  .wx-ico{font-size:6.5vw;margin-right:2vw}.wx-temp{font-size:7vw}
+  .wx-side{font-size:1.8vw}.wx-desc{font-size:2.2vw;margin-top:.6vw}.wx-city{font-size:1.6vw;margin-bottom:1vw}
+  .hours{margin-top:1.6vw;padding-top:1.4vw}.hr{font-size:1.6vw}.hr .e{font-size:2.8vw;margin:.4vw 0}.hr b{font-size:1.9vw}
+  .joke{margin-top:2.5vh;border-radius:2.4vw;padding:2.2vw 2.6vw}
+  .joke-h{font-size:1.6vw}.joke-q,.joke-a{font-size:2.3vw}.joke-q{margin-top:1vw}.joke-a{margin-top:.8vw}
+  .status{font-size:1.2vw}
+}
+@media (orientation:portrait){.right{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-flex:1;flex:1;min-height:0}}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div class="app">
+  <div class="clock">
+    <div class="time"><span id="hm">--:--</span><span class="sec" id="sec"></span><span class="ampm" id="ampm"></span></div>
+    <div class="date" id="date"></div>
+  </div>
+  <div class="right">
+    <div class="wx">
+      <div class="wx-city">Mississauga, ON</div>
+      <div class="wx-top">
+        <div class="wx-ico" id="ico">⛅</div>
+        <div><div class="wx-temp" id="temp">--°</div></div>
+        <div class="wx-side">
+          <div>H <b id="hi">--</b> · L <b id="lo">--</b></div>
+          <div>Feels <b id="feels">--</b></div>
+          <div>💨 <b id="wind">--</b> km/h</div>
+        </div>
+      </div>
+      <div class="wx-desc" id="desc">Loading weather…</div>
+      <div class="hours" id="hours"></div>
+    </div>
+    <div class="joke">
+      <div class="joke-h"><span>😂 Joke of the moment</span><span id="next"></span></div>
+      <div class="joke-q" id="jq"></div>
+      <div class="joke-a" id="ja"></div>
+    </div>
+  </div>
+</div>
+<div id="dim"></div>
+<div class="status" id="status"></div>
+
+<script>
+(function(){
+  var TZ = 'America/Toronto';
+  var LAT = 43.589, LON = -79.6441;   // Mississauga
+  var JOKE_HOURS = 4;
+
+  // Each joke is [setup, punchline]. One is shown per 4-hour block, cycling through all of them.
+  var JOKES = [
+    ["Why don't skeletons fight each other?","They don't have the guts."],
+    ["I told my wife she was drawing her eyebrows too high.","She looked surprised."],
+    ["Why did the scarecrow win an award?","He was outstanding in his field."],
+    ["What do you call a fake noodle?","An impasta."],
+    ["Why can't a bicycle stand up by itself?","It's two tired."],
+    ["I'm reading a book about anti-gravity.","It's impossible to put down."],
+    ["What do you call a bear with no teeth?","A gummy bear."],
+    ["Why did the math book look sad?","It had too many problems."],
+    ["How does a penguin build its house?","Igloos it together."],
+    ["Why don't eggs tell jokes?","They'd crack each other up."],
+    ["What did the ocean say to the beach?","Nothing, it just waved."],
+    ["Why did the coffee file a police report?","It got mugged."],
+    ["What do you call cheese that isn't yours?","Nacho cheese."],
+    ["Why are elevator jokes so good?","They work on many levels."],
+    ["I used to hate facial hair...","but then it grew on me."],
+    ["What do you call a sleeping bull?","A bulldozer."],
+    ["Why did the golfer bring two pairs of pants?","In case he got a hole in one."],
+    ["How do you organize a space party?","You planet."],
+    ["Why don't scientists trust atoms?","Because they make up everything."],
+    ["What's orange and sounds like a parrot?","A carrot."],
+    ["Why did the tomato blush?","It saw the salad dressing."],
+    ["What do you call a dinosaur with an extensive vocabulary?","A thesaurus."],
+    ["Why did the cookie go to the doctor?","It was feeling crummy."],
+    ["What did one wall say to the other?","I'll meet you at the corner."],
+    ["Why was the computer cold?","It left its Windows open."],
+    ["What do you call a lazy kangaroo?","A pouch potato."],
+    ["Why do cows wear bells?","Because their horns don't work."],
+    ["What did the janitor say when he jumped out of the closet?","Supplies!"],
+    ["Why can't you give Elsa a balloon?","She'll let it go."],
+    ["What do you call a pile of cats?","A meowntain."],
+    ["Why did the bicycle fall over?","It was two-tired of standing."],
+    ["What did the grape do when it got stepped on?","It let out a little wine."],
+    ["How do you make a tissue dance?","Put a little boogie in it."],
+    ["Why are ghosts bad liars?","You can see right through them."],
+    ["What did the left eye say to the right eye?","Between you and me, something smells."],
+    ["Why did the stadium get hot after the game?","All the fans left."],
+    ["What kind of shoes do ninjas wear?","Sneakers."],
+    ["Why don't oysters share their pearls?","Because they're shellfish."],
+    ["What do you call a fish wearing a bowtie?","Sofishticated."],
+    ["Why was the broom late?","It over-swept."],
+    ["How do trees get online?","They just log in."],
+    ["Why did the picture go to jail?","It was framed."],
+    ["What did the zero say to the eight?","Nice belt."],
+    ["Why do seagulls fly over the sea?","Because if they flew over the bay, they'd be bagels."],
+    ["What do you call a snowman with a six-pack?","An abdominal snowman."],
+    ["Why did the Canadian cross the road?","To say sorry to the person on the other side."],
+    ["What's a Canadian's favourite kind of math?","Moose-tiplication."],
+    ["Why did the hockey player bring string to the game?","So he could tie the score."],
+    ["What do you call a Canadian goose that tells jokes?","A honk-y-tonk comedian."],
+    ["Why are Toronto drivers so calm in traffic?","They've had years of practice on the 401."],
+    ["What's a snowman's favourite breakfast?","Frosted Flakes."],
+    ["Why did the maple tree go to therapy?","It had too many sappy feelings."],
+    ["What do you call a deer with no eyes?","No idea."],
+    ["Why did the phone wear glasses?","It lost its contacts."],
+    ["What did the router say to the doctor?","It hurts when IP."],
+    ["Why did the developer go broke?","He used up all his cache."],
+    ["How many programmers does it take to change a light bulb?","None, that's a hardware problem."],
+    ["Why do Java developers wear glasses?","Because they don't C#."],
+    ["What's an astronaut's favourite part of a computer?","The space bar."],
+    ["Why did the old iPhone go to school?","To get a little smarter."],
+    ["What do you call an iPhone that's always on the desk?","A retired smartphone with a great view."],
+    ["Why was the clock kicked out of the library?","It tocked too much."],
+    ["What did the thermometer say to the graduated cylinder?","You may have graduated, but I've got more degrees."],
+    ["Why do bees have sticky hair?","Because they use honeycombs."],
+    ["What do you call a belt made of watches?","A waist of time."],
+    ["Why did the banana go to the doctor?","It wasn't peeling well."],
+    ["What do you call a boomerang that won't come back?","A stick."],
+    ["Why did the gym close down?","It just didn't work out."],
+    ["What does a cloud wear under its raincoat?","Thunderwear."],
+    ["Why did the snowflake break up with the raindrop?","It needed some space to chill."],
+    ["What did one snowman say to the other?","Do you smell carrots?"],
+    ["Why don't mountains get cold?","They wear snow caps."]
+  ];
+
+  // Weather codes from Open-Meteo (WMO)
+  function wmo(code, isDay){
+    var sun = isDay ? '☀️' : '🌙', part = isDay ? '⛅' : '☁️';
+    var map = {0:[sun,'Clear'],1:[isDay?'🌤️':'🌙','Mostly clear'],2:[part,'Partly cloudy'],3:['☁️','Overcast'],
+      45:['🌫️','Fog'],48:['🌫️','Freezing fog'],51:['🌦️','Light drizzle'],53:['🌦️','Drizzle'],55:['🌧️','Heavy drizzle'],
+      56:['🌧️','Freezing drizzle'],57:['🌧️','Freezing drizzle'],61:['🌦️','Light rain'],63:['🌧️','Rain'],65:['🌧️','Heavy rain'],
+      66:['🌧️','Freezing rain'],67:['🌧️','Freezing rain'],71:['🌨️','Light snow'],73:['🌨️','Snow'],75:['❄️','Heavy snow'],77:['🌨️','Snow grains'],
+      80:['🌦️','Rain showers'],81:['🌧️','Rain showers'],82:['⛈️','Violent showers'],85:['🌨️','Snow showers'],86:['❄️','Heavy snow showers'],
+      95:['⛈️','Thunderstorm'],96:['⛈️','Thunderstorm, hail'],99:['⛈️','Thunderstorm, hail']};
+    return map[code] || [part,'—'];
+  }
+  function bgFor(code, isDay){
+    if (!isDay) return 'linear-gradient(160deg,#141b3a,#05070f)';
+    if (code >= 95) return 'linear-gradient(160deg,#3b3f58,#121522)';
+    if (code >= 71 && code <= 86 && code !== 80 && code !== 81 && code !== 82) return 'linear-gradient(160deg,#6b7f99,#26324a)';
+    if (code >= 51) return 'linear-gradient(160deg,#3d5a80,#16233a)';
+    if (code >= 3) return 'linear-gradient(160deg,#55657d,#202a3b)';
+    return 'linear-gradient(160deg,#2f7fd6,#173a74)';
+  }
+
+  function $(id){ return document.getElementById(id); }
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+
+  // Toronto local time parts (works even if the phone is set to another zone)
+  var fmtParts = null;
+  try { fmtParts = new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour12:false,year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'}); } catch(e){}
+  function nowTO(){
+    var d = new Date();
+    if (!fmtParts) return {y:d.getFullYear(),mo:d.getMonth()+1,d:d.getDate(),h:d.getHours(),mi:d.getMinutes(),s:d.getSeconds()};
+    var s = fmtParts.format(d); // "11/17/2026, 14:05:09"
+    var m = s.match(/(\d+)\/(\d+)\/(\d+),?\s+(\d+):(\d+):(\d+)/);
+    return {y:+m[3],mo:+m[1],d:+m[2],h:(+m[4])%24,mi:+m[5],s:+m[6]};
+  }
+  var DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  var lastJokeBlock = -1;
+  function tick(){
+    var t = nowTO();
+    var h12 = t.h % 12 || 12;
+    $('hm').textContent = h12 + ':' + pad(t.mi);
+    $('sec').textContent = pad(t.s);
+    $('ampm').textContent = t.h < 12 ? 'AM' : 'PM';
+    var dow = new Date(Date.UTC(t.y, t.mo-1, t.d)).getUTCDay();
+    $('date').textContent = DAYS[dow] + ', ' + MONTHS[t.mo-1] + ' ' + t.d;
+
+    // Joke changes at 12a, 4a, 8a, 12p, 4p, 8p Toronto time
+    var dayNum = Math.floor(Date.UTC(t.y, t.mo-1, t.d) / 86400000);
+    var block = dayNum * (24/JOKE_HOURS) + Math.floor(t.h / JOKE_HOURS);
+    if (block !== lastJokeBlock){
+      lastJokeBlock = block;
+      var j = JOKES[block % JOKES.length];
+      $('jq').textContent = j[0]; $('ja').textContent = j[1];
+    }
+    var minsLeft = (JOKE_HOURS - 1 - (t.h % JOKE_HOURS)) * 60 + (59 - t.mi) + 1;
+    $('next').textContent = 'next in ' + (minsLeft >= 60 ? Math.floor(minsLeft/60) + 'h ' : '') + (minsLeft % 60) + 'm';
+
+    // Night dimming 11pm–6am
+    $('dim').style.opacity = (t.h >= 23 || t.h < 6) ? '0.55' : '0';
+
+    // Reload once a day at 3:30am to pick up page updates and clear memory
+    if (t.h === 3 && t.mi === 30 && t.s === 0) location.reload();
+  }
+
+  function hourLabel(iso){ var h = +iso.substr(11,2); return (h % 12 || 12) + (h < 12 ? 'a' : 'p'); }
+
+  function renderWx(w){
+    var c = w.current, d = w.daily;
+    var info = wmo(c.weather_code, c.is_day);
+    $('ico').textContent = info[0];
+    $('desc').textContent = info[1] + (c.relative_humidity_2m != null ? ' · ' + c.relative_humidity_2m + '% humidity' : '');
+    $('temp').textContent = Math.round(c.temperature_2m) + '°';
+    $('feels').textContent = Math.round(c.apparent_temperature) + '°';
+    $('wind').textContent = Math.round(c.wind_speed_10m);
+    $('hi').textContent = Math.round(d.temperature_2m_max[0]) + '°';
+    $('lo').textContent = Math.round(d.temperature_2m_min[0]) + '°';
+    $('bg').style.background = bgFor(c.weather_code, c.is_day);
+
+    // next 5 slots, every 3 hours from the coming hour
+    var H = w.hourly, start = 0, cur = c.time.substr(0,13);
+    for (var i = 0; i < H.time.length; i++){ if (H.time[i].substr(0,13) > cur){ start = i; break; } }
+    var html = '';
+    for (var k = 0; k < 5; k++){
+      var idx = start + k*3; if (idx >= H.time.length) break;
+      var isDay = H.is_day ? H.is_day[idx] : 1;
+      var pp = H.precipitation_probability ? H.precipitation_probability[idx] : null;
+      html += '<div class="hr">' + hourLabel(H.time[idx]) + '<span class="e">' + wmo(H.weather_code[idx], isDay)[0] + '</span><b>' +
+        Math.round(H.temperature_2m[idx]) + '°</b>' + (pp != null && pp >= 20 ? '<div>💧' + pp + '%</div>' : '') + '</div>';
+    }
+    $('hours').innerHTML = html;
+  }
+
+  function loadWx(){
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON +
+      '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day' +
+      '&hourly=temperature_2m,weather_code,precipitation_probability,is_day' +
+      '&daily=temperature_2m_max,temperature_2m_min&timezone=' + encodeURIComponent(TZ) + '&forecast_days=2';
+    var x = new XMLHttpRequest();
+    x.open('GET', url, true);
+    x.timeout = 20000;
+    x.onload = function(){
+      if (x.status !== 200) return fail();
+      try {
+        var w = JSON.parse(x.responseText); renderWx(w);
+        try { localStorage.setItem('wx', x.responseText); } catch(e){}
+        var t = nowTO(); $('status').textContent = 'Updated ' + ((t.h % 12) || 12) + ':' + pad(t.mi);
+      } catch(e){ fail(); }
+    };
+    x.onerror = x.ontimeout = fail;
+    x.send();
+  }
+  function fail(){ $('status').textContent = 'Weather offline, retrying…'; setTimeout(loadWx, 60000); }
+
+  // show cached weather instantly, then refresh every 15 min
+  try { var cached = localStorage.getItem('wx'); if (cached) renderWx(JSON.parse(cached)); } catch(e){}
+  tick(); setInterval(tick, 1000);
+  loadWx(); setInterval(loadWx, 15 * 60 * 1000);
+
+  // tap anywhere to refresh weather now
+  document.body.addEventListener('click', function(){ $('status').textContent = 'Refreshing…'; loadWx(); });
+})();
+</script>
+</body>
+</html>
